@@ -19,6 +19,9 @@ class TestUrl:
         self.driver.implicitly_wait(8)
         yield
         self.driver.close()
+    
+    def navigate_back_to_main_page(self):
+        self.driver.back()
 
 
     def test_visit_all_animal_pages(self, launch_driver):
@@ -36,11 +39,8 @@ class TestUrl:
 
             #Get Href value
             href_value = category_link.get_attribute('href')
+            match = re.search(r'categoryId=([^&]+)', href_value)
 
-
-            #Use an expression to get the category ID from href
-            pattern = r'categoryId=([^&]+)'
-            match = re.search(pattern, href_value)
 
             if match:
                 #
@@ -48,12 +48,11 @@ class TestUrl:
 
                 self.category_links.append(category_id)
 
-        for index, item_href in enumerate(self.category_links):
+        for item_href in self.category_links:
 
             self.driver.find_element(by=By.XPATH, value=f"/html/body/div[2]/div[2]/div[1]/div/a[contains(@href, 'categoryId={item_href}')]").click()
 
 
-            
             catalog_name = self.driver.find_element(by=By.XPATH, value='//*[@id="Catalog"]/h2').text
             assert item_href.lower() == catalog_name.lower()
             
@@ -62,7 +61,7 @@ class TestUrl:
             # For example, you can verify the category page is loaded or check specific elements on the page
 
             # Navigate back to the main page
-            self.driver.back()
+            self.navigate_back_to_main_page()
 
 
     def test_animal_categories(self, launch_driver):
@@ -70,7 +69,7 @@ class TestUrl:
         self.driver.get(self.url)
         assert self.driver.title == "JPetStore Demo"
 
-        for index, item_href in enumerate(self.category_links):
+        for item_href in self.category_links:
 
             self.driver.find_element(by=By.XPATH, value=f"/html/body/div[2]/div[2]/div[1]/div/a[contains(@href, 'categoryId={item_href}')]").click()
             
@@ -99,9 +98,50 @@ class TestUrl:
 
 
                 assert animals_name == animal_names[number]
-            
-                
-                self.driver.back()
 
-            self.driver.back()
 
+                self.navigate_back_to_main_page()
+            self.navigate_back_to_main_page()
+
+    def test_visit_item_details_all_the_way_down(self, category_name, launch_driver):
+        # Open OctoPerf's JPetStore
+        self.driver.get(self.url)
+        assert self.driver.title == "JPetStore Demo"
+
+        # Navigate to the specified category
+        category_link = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, f'//a[contains(text(), "{category_name}")]'))
+        )
+        category_link.click()
+
+        # Get product links on the category page
+        product_links = self.driver.find_elements(By.XPATH, '//a[contains(@href, "productId=")]')
+
+        for product_link in product_links:
+            product_name = product_link.text
+            product_link.click()
+
+            # Perform additional actions on the product details page if needed
+            # For example, extract and print item details
+
+            # Wait for a few seconds to see the page (you can replace this with further actions)
+            WebDriverWait(self.driver, 5).until(EC.title_contains(product_name))
+
+            # Print the title of the current page
+            print("Current Page Title:", self.driver.title)
+
+            # Navigate back to the category page
+            self.navigate_back_to_main_page()
+
+        # Navigate back to the main page after visiting all products in the category
+        self.navigate_back_to_main_page()
+
+    def test_visit_item_details_all_the_way_down(self, launch_driver):
+        self.driver.get(self.url)
+        assert self.driver.title == "JPetStore Demo"
+
+        # List of categories you want to navigate through
+        categories_to_visit = ["FISH", "DOGS", "CATS", "REPTILES", "BIRDS"]
+
+        for category_name in categories_to_visit:
+            self.test_visit_item_details_all_the_way_down(category_name)
