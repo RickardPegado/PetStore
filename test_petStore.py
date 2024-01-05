@@ -33,20 +33,15 @@ class TestUrl:
         category_links = sidebar_content.find_elements(By.TAG_NAME, 'a')
 
         for category_link in category_links:
-
-            #Get Href value
+            # Get Href value
             href_value = category_link.get_attribute('href')
 
-
-            #Use an expression to get the category ID from href
-            pattern = r'categoryId=([^&]+)'
-            match = re.search(pattern, href_value)
-
+            # Use a regular expression to get the category ID from href
+            match = re.search(r'categoryId=([^&]+)', href_value)
+    
+            # If there's a match, append the category ID
             if match:
-                #
-                category_id = match.group(1)
-
-                self.category_links.append(category_id)
+                self.category_links.append(match.group(1))
 
         for index, item_href in enumerate(self.category_links):
 
